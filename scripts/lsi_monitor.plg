@@ -1,1 +1,55 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name      "lsi_monitor">
+<!ENTITY author    "Matt">
+<!ENTITY version   "2026.06.05">
+<!ENTITY github    "https://raw.githubusercontent.com/fatredwombat1-beep/lsi_monitor/refs/heads/main">
+<!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
+<!ENTITY bootdir   "/boot/config/plugins/&name;">
+]>
+
+<PLUGIN name="&name;" author="&author;" version="&version;" pluginURL="&github;/&name;.plg" min="6.9.0">
+
+<FILE Name="&bootdir;/get_temp.sh">
+<URL>&github;/scripts/get_temp.sh</URL>
+</FILE>
+
+<FILE Name="&bootdir;/storcli64">
+<URL>&github;/bin/storcli64</URL>
+</FILE>
+
+<FILE Run="/bin/bash">
+<INLINE>
+echo "Installing LSI Monitor..."
+
+# Create RAM directories
+mkdir -p &plugdir;/scripts
+mkdir -p &plugdir;/bin
+
+# Copy files from USB to RAM
+cp &bootdir;/get_temp.sh &plugdir;/scripts/
+cp &bootdir;/storcli64 &plugdir;/bin/
+
+# Set execution permissions
+chmod +x &plugdir;/scripts/get_temp.sh
+chmod +x &plugdir;/bin/storcli64
+
+# (Optional) Symlink storcli64 to a global bin path for easy terminal use
+ln -sf &plugdir;/bin/storcli64 /usr/local/sbin/storcli
+
+echo "Installation Complete."
+</INLINE>
+</FILE>
+
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+echo "Removing LSI Monitor..."
+rm -rf &plugdir;
+rm -rf &bootdir;
+rm -f /usr/local/sbin/storcli
+echo "Removal Complete."
+</INLINE>
+</FILE>
+
+</PLUGIN> 
 
