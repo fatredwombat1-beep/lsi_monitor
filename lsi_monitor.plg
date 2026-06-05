@@ -1,7 +1,7 @@
 <?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "lsi_monitor">
-<!ENTITY author    "YourName">
+<!ENTITY author    "fatredwombat">
 <!ENTITY version   "2026.06.05">
 <!ENTITY github    "https://raw.githubusercontent.com/fatredwombat1-beep/lsi_monitor/refs/heads/main">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
@@ -26,27 +26,22 @@
 <INLINE>
 echo "Installing LSI Monitor Dashboard..."
 
-# Create RAM directories
 mkdir -p &plugdir;/scripts
 mkdir -p &plugdir;/bin
 
-# Copy files to RAM
 cp &bootdir;/get_temp.sh &plugdir;/scripts/
 cp &bootdir;/storcli64 &plugdir;/bin/
 cp &bootdir;/lsi_monitor.page &plugdir;/
 
-# Set execution permissions
 chmod +x &plugdir;/scripts/get_temp.sh
 chmod +x &plugdir;/bin/storcli64
 
-# Create symlink for storcli
 ln -sf &plugdir;/bin/storcli64 /usr/local/sbin/storcli
 
-# Setup the Cron Job (Runs every 5 minutes)
-echo "*/5 * * * * &plugdir;/scripts/get_temp.sh >/dev/null 2>&1" > /etc/cron.d/lsi_monitor
+# Setup the Cron Job with properly escaped XML
+echo "*/5 * * * * &plugdir;/scripts/get_temp.sh >/dev/null 2>&amp;1" > /etc/cron.d/lsi_monitor
 chmod 644 /etc/cron.d/lsi_monitor
 
-# Run the script once immediately so the dashboard has data on first load
 &plugdir;/scripts/get_temp.sh
 
 echo "Installation Complete."
@@ -66,4 +61,3 @@ echo "Removal Complete."
 </FILE>
 
 </PLUGIN>
-
