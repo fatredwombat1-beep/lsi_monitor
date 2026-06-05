@@ -3,7 +3,7 @@
 <!ENTITY name      "lsi_monitor">
 <!ENTITY author    "YourName">
 <!ENTITY version   "2026.06.05">
-<!ENTITY github    "https://raw.githubusercontent.com/YourUsername/lsi_monitor/main">
+<!ENTITY github    "https://raw.githubusercontent.com/fatredwombat1-beep/lsi_monitor/refs/heads/main">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY bootdir   "/boot/config/plugins/&name;">
 ]>
