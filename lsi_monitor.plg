@@ -1,9 +1,9 @@
 <?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "lsi_monitor">
-<!ENTITY author    "Matt">
+<!ENTITY author    "YourName">
 <!ENTITY version   "2026.06.05">
-<!ENTITY github    "https://raw.githubusercontent.com/fatredwombat1-beep/lsi_monitor/refs/heads/main">
+<!ENTITY github    "https://raw.githubusercontent.com/YourUsername/lsi_monitor/main">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY bootdir   "/boot/config/plugins/&name;">
 ]>
@@ -18,24 +18,36 @@
 <URL>&github;/bin/storcli64</URL>
 </FILE>
 
+<FILE Name="&bootdir;/lsi_monitor.page">
+<URL>&github;/lsi_monitor.page</URL>
+</FILE>
+
 <FILE Run="/bin/bash">
 <INLINE>
-echo "Installing LSI Monitor..."
+echo "Installing LSI Monitor Dashboard..."
 
 # Create RAM directories
 mkdir -p &plugdir;/scripts
 mkdir -p &plugdir;/bin
 
-# Copy files from USB to RAM
+# Copy files to RAM
 cp &bootdir;/get_temp.sh &plugdir;/scripts/
 cp &bootdir;/storcli64 &plugdir;/bin/
+cp &bootdir;/lsi_monitor.page &plugdir;/
 
 # Set execution permissions
 chmod +x &plugdir;/scripts/get_temp.sh
 chmod +x &plugdir;/bin/storcli64
 
-# (Optional) Symlink storcli64 to a global bin path for easy terminal use
+# Create symlink for storcli
 ln -sf &plugdir;/bin/storcli64 /usr/local/sbin/storcli
+
+# Setup the Cron Job (Runs every 5 minutes)
+echo "*/5 * * * * &plugdir;/scripts/get_temp.sh >/dev/null 2>&1" > /etc/cron.d/lsi_monitor
+chmod 644 /etc/cron.d/lsi_monitor
+
+# Run the script once immediately so the dashboard has data on first load
+&plugdir;/scripts/get_temp.sh
 
 echo "Installation Complete."
 </INLINE>
@@ -47,9 +59,11 @@ echo "Removing LSI Monitor..."
 rm -rf &plugdir;
 rm -rf &bootdir;
 rm -f /usr/local/sbin/storcli
+rm -f /etc/cron.d/lsi_monitor
+rm -f /tmp/lsi_temp.txt
 echo "Removal Complete."
 </INLINE>
 </FILE>
 
-</PLUGIN> 
+</PLUGIN>
 
