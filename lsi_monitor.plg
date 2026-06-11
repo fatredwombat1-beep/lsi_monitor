@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "lsi_monitor">
 <!ENTITY author    "fatredwombat">
-<!ENTITY version   "2026.06.12">
+<!ENTITY version   "2026.06.12b">
 <!ENTITY github    "https://raw.githubusercontent.com/fatredwombat1-beep/lsi_monitor/refs/heads/main">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY bootdir   "/boot/config/plugins/&name;">
@@ -45,27 +45,13 @@ echo "$TEMP" > "$TMPFILE"
 <URL>&github;/bin/storcli64</URL>
 </FILE>
 
-<FILE Run="/bin/bash">
+<FILE Name="&bootdir;/lsi_monitor.page">
 <INLINE>
-echo "Installing LSI Monitor..."
-
-mkdir -p &plugdir;/scripts
-mkdir -p &plugdir;/bin
-
-cp &bootdir;/get_temp.sh &plugdir;/scripts/get_temp.sh
-cp &bootdir;/storcli64   &plugdir;/bin/storcli64
-
-chmod +x &plugdir;/scripts/get_temp.sh
-chmod +x &plugdir;/bin/storcli64
-
-ln -sf &plugdir;/bin/storcli64 /usr/local/sbin/storcli
-
-cat > &plugdir;/lsi_monitor.page << 'PAGEOF'
 Menu="Dashboard:0"
 Title="LSI Monitor"
 Icon="thermometer-half"
 ---
-<?php
+&lt;?php
 $docroot = $docroot ?? $_SERVER['DOCUMENT_ROOT'] ?: '/usr/local/emhttp';
 require_once "$docroot/webGui/include/Helpers.php";
 
@@ -73,25 +59,42 @@ $raw  = trim(@file_get_contents('/tmp/lsi_temp.txt'));
 $temp = is_numeric($raw) ? (int)$raw : null;
 
 $mytiles['lsi_monitor']['column1'] = '
-<tbody id="lsi-monitor" title="LSI 9300-8i HBA">
-  <tr>
-    <td>
-      <span class="tile-header">
-        <span class="tile-header-left">
-          <i class="fa fa-thermometer-half icon-hardware f32"></i>
-          <div class="section">LSI 9300-8i HBA<br>
-            <span><i class="fa fa-thermometer-half"></i> ROC Temperature: '.($temp !== null ? my_temp($temp) : '<em>N/A</em>').'</span>
-          </div>
-        </span>
-        <span class="tile-header-right">
-          <span class="tile-header-right-controls"></span>
-        </span>
-      </span>
-    </td>
-  </tr>
-</tbody>';
-?>
-PAGEOF
+&lt;tbody id="lsi-monitor" title="LSI 9300-8i HBA"&gt;
+  &lt;tr&gt;
+    &lt;td&gt;
+      &lt;span class="tile-header"&gt;
+        &lt;span class="tile-header-left"&gt;
+          &lt;i class="fa fa-thermometer-half icon-hardware f32"&gt;&lt;/i&gt;
+          &lt;div class="section"&gt;LSI 9300-8i HBA&lt;br&gt;
+            &lt;span&gt;&lt;i class="fa fa-thermometer-half"&gt;&lt;/i&gt; ROC Temperature: '.($temp !== null ? my_temp($temp) : '&lt;em&gt;N/A&lt;/em&gt;').'&lt;/span&gt;
+          &lt;/div&gt;
+        &lt;/span&gt;
+        &lt;span class="tile-header-right"&gt;
+          &lt;span class="tile-header-right-controls"&gt;&lt;/span&gt;
+        &lt;/span&gt;
+      &lt;/span&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;';
+?&gt;
+</INLINE>
+</FILE>
+
+<FILE Run="/bin/bash">
+<INLINE>
+echo "Installing LSI Monitor..."
+
+mkdir -p &plugdir;/scripts
+mkdir -p &plugdir;/bin
+
+cp &bootdir;/get_temp.sh  &plugdir;/scripts/get_temp.sh
+cp &bootdir;/storcli64    &plugdir;/bin/storcli64
+cp &bootdir;/lsi_monitor.page &plugdir;/lsi_monitor.page
+
+chmod +x &plugdir;/scripts/get_temp.sh
+chmod +x &plugdir;/bin/storcli64
+
+ln -sf &plugdir;/bin/storcli64 /usr/local/sbin/storcli
 
 echo "*/5 * * * * root &plugdir;/scripts/get_temp.sh >/dev/null 2>&amp;1" > /etc/cron.d/lsi_monitor
 chmod 644 /etc/cron.d/lsi_monitor
