@@ -7,14 +7,14 @@ $lsi_temp = trim(@file_get_contents('/tmp/lsi_temp.txt'));
 if (!$lsi_temp) $lsi_temp = "Loading...";
 ?>
 <table class="dash_custom">
-    <tbody title="LSI Monitor">
+    <thead title="LSI Monitor">
         <tr>
             <td class="next" colspan="2">
-                <i class="fa fa-chevron-down chevron mt1" id="dash_lsi_monitor" onclick="toggleChevron('dash_lsi_monitor',0)"></i>
-                <i class="fa fa-thermometer-half fa-fw"></i> LSI 9300-8i HBA
+                <i class="fa fa-thermometer-half"></i> LSI 9300-8i HBA
+                <i class="fa fa-chevron-down chevron mt1" style="float:right; cursor:pointer;" id="dash_lsi_monitor" onclick="toggleChevron('dash_lsi_monitor',0)"></i>
             </td>
         </tr>
-    </tbody>
+    </thead>
     <tbody class="dash_lsi_monitor">
         <tr>
             <td style="width:50%">ROC Temperature</td>
