@@ -1,19 +1,41 @@
 Menu="Dashboard"
 Icon="thermometer-half"
 ---
-<table id="db-lsimonitor" class="dash_custom">
-    <thead sort="999" title="LSI Monitor">
-        <tr class="hd">
-            <td colspan="2">
-                <i class="fa fa-thermometer-half icon-hardware"></i>
-                <span class="cap">LSI 9300-8i HBA</span>
-            </td>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td style="width:50%;">ROC Temperature</td>
-            <td><span class="text-bold"><?php echo trim(@file_get_contents('/tmp/lsi_temp.txt')) ?: "Loading..."; ?> &deg;C</span></td>
-        </tr>
-    </tbody>
+<?php
+$raw = trim(@file_get_contents('/tmp/lsi_temp.txt'));
+$temp = is_numeric($raw) ? (int)$raw : null;
+
+if ($temp === null) {
+  $color = '';
+  $display = 'N/A';
+} elseif ($temp >= 85) {
+  $color = 'color:#f44336;'; // red
+  $display = $temp;
+} elseif ($temp >= 70) {
+  $color = 'color:#ff9800;'; // amber
+  $display = $temp;
+} else {
+  $color = 'color:#4caf50;'; // green
+  $display = $temp;
+}
+?>
+<table id="db-lsimonitor" class="dash" sort="999">
+  <thead>
+    <tr class="hd">
+      <td colspan="2">
+        <i class="fa fa-thermometer-half icon"></i>
+        <span>LSI 9300-8i HBA</span>
+      </td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ROC Temp</td>
+      <td class="narrow">
+        <span style="font-weight:600;<?= $color ?>">
+          <?= $display ?><?= $temp !== null ? ' &deg;C' : '' ?>
+        </span>
+      </td>
+    </tr>
+  </tbody>
 </table>
