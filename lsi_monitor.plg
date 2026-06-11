@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "lsi_monitor">
 <!ENTITY author    "fatredwombat">
-<!ENTITY version   "2026.06.12c">
+<!ENTITY version   "2026.06.12d">
 <!ENTITY github    "https://raw.githubusercontent.com/fatredwombat1-beep/lsi_monitor/refs/heads/main">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY bootdir   "/boot/config/plugins/&name;">
@@ -49,7 +49,6 @@ done
 <FILE Name="&bootdir;/lsi_monitor.page">
 <INLINE>
 Menu="Dashboard:0"
-Title="LSI Monitor"
 Icon="thermometer-half"
 ---
 &lt;?php
