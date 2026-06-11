@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "lsi_monitor">
 <!ENTITY author    "fatredwombat">
-<!ENTITY version   "2026.06.12d">
+<!ENTITY version   "2026.06.12">
 <!ENTITY github    "https://raw.githubusercontent.com/fatredwombat1-beep/lsi_monitor/refs/heads/main">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY bootdir   "/boot/config/plugins/&name;">
@@ -69,7 +69,7 @@ foreach ($tmpfiles as $file) {
   $raw  = trim(@file_get_contents($file));
   $temp = is_numeric($raw) ? (int)$raw : null;
   $rows .= '
-  &lt;tr class="updated"&gt;
+  &lt;tr&gt;
     &lt;td&gt;
       &lt;span class="w36"&gt;&lt;i class="fa fa-fw fa-thermometer-half"&gt;&lt;/i&gt; Controller '.$ctrl.' ROC Temp&lt;/span&gt;
       &lt;span&gt;'.($temp !== null ? my_temp($temp) : '&lt;em&gt;N/A&lt;/em&gt;').'&lt;/span&gt;
@@ -83,10 +83,10 @@ $mytiles['lsi_monitor']['column1'] = '
     &lt;td&gt;
       &lt;span class="tile-header"&gt;
         &lt;span class="tile-header-left"&gt;
-          &lt;i class="fa fa-thermometer-half icon-hardware f32"&gt;&lt;/i&gt;
-          &lt;div&gt;
+          &lt;i class="icon-hardware f32"&gt;&lt;/i&gt;
+          &lt;div class="section"&gt;
             &lt;h3 class="tile-header-main"&gt;LSI HBA Monitor&lt;/h3&gt;
-            &lt;span class="tile-header-subtitle"&gt;'.$subtitle.'&lt;/span&gt;
+            &lt;span&gt;'.$subtitle.'&lt;/span&gt;
           &lt;/div&gt;
         &lt;/span&gt;
         &lt;span class="tile-header-right"&gt;
