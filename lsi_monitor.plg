@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "lsi_monitor">
 <!ENTITY author    "fatredwombat">
-<!ENTITY version   "2026.06.12a">
+<!ENTITY version   "2026.06.12">
 <!ENTITY github    "https://raw.githubusercontent.com/fatredwombat1-beep/lsi_monitor/refs/heads/main">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY bootdir   "/boot/config/plugins/&name;">
@@ -41,8 +41,26 @@ echo "$TEMP" > "$TMPFILE"
 </INLINE>
 </FILE>
 
-<FILE Name="&bootdir;/lsi_monitor.page">
+<FILE Name="&bootdir;/storcli64">
+<URL>&github;/bin/storcli64</URL>
+</FILE>
+
+<FILE Run="/bin/bash">
 <INLINE>
+echo "Installing LSI Monitor..."
+
+mkdir -p &plugdir;/scripts
+mkdir -p &plugdir;/bin
+
+cp &bootdir;/get_temp.sh &plugdir;/scripts/get_temp.sh
+cp &bootdir;/storcli64   &plugdir;/bin/storcli64
+
+chmod +x &plugdir;/scripts/get_temp.sh
+chmod +x &plugdir;/bin/storcli64
+
+ln -sf &plugdir;/bin/storcli64 /usr/local/sbin/storcli
+
+cat > &plugdir;/lsi_monitor.page << 'PAGEOF'
 Menu="Dashboard:0"
 Title="LSI Monitor"
 Icon="thermometer-half"
@@ -61,7 +79,7 @@ $mytiles['lsi_monitor']['column1'] = '
       <span class="tile-header">
         <span class="tile-header-left">
           <i class="fa fa-thermometer-half icon-hardware f32"></i>
-          <div class="section">_(LSI 9300-8i HBA)_<br>
+          <div class="section">LSI 9300-8i HBA<br>
             <span><i class="fa fa-thermometer-half"></i> ROC Temperature: '.($temp !== null ? my_temp($temp) : '<em>N/A</em>').'</span>
           </div>
         </span>
@@ -73,29 +91,12 @@ $mytiles['lsi_monitor']['column1'] = '
   </tr>
 </tbody>';
 ?>
+PAGEOF
 
-<FILE Run="/bin/bash">
-<INLINE>
-echo "Installing LSI Monitor..."
-
-mkdir -p &plugdir;/scripts
-mkdir -p &plugdir;/bin
-
-cp &bootdir;/get_temp.sh &plugdir;/scripts/get_temp.sh
-cp &bootdir;/storcli64   &plugdir;/bin/storcli64
-cp &bootdir;/lsi_monitor.page &plugdir;/lsi_monitor.page
-
-chmod +x &plugdir;/scripts/get_temp.sh
-chmod +x &plugdir;/bin/storcli64
-
-ln -sf &plugdir;/bin/storcli64 /usr/local/sbin/storcli
-
-# Write cron job and reload crond
 echo "*/5 * * * * root &plugdir;/scripts/get_temp.sh >/dev/null 2>&amp;1" > /etc/cron.d/lsi_monitor
 chmod 644 /etc/cron.d/lsi_monitor
 kill -HUP $(cat /var/run/crond.pid 2>/dev/null) 2>/dev/null || true
 
-# Run immediately so dashboard is not blank on first load
 &plugdir;/scripts/get_temp.sh
 
 echo "Installation complete."
