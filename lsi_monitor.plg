@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "lsi_monitor">
 <!ENTITY author    "fatredwombat">
-<!ENTITY version   "2026.06.12b">
+<!ENTITY version   "2026.06.12c">
 <!ENTITY github    "https://raw.githubusercontent.com/fatredwombat1-beep/lsi_monitor/refs/heads/main">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY bootdir   "/boot/config/plugins/&name;">
@@ -15,29 +15,30 @@
 #!/bin/bash
 
 STORCLI="/usr/local/emhttp/plugins/lsi_monitor/bin/storcli64"
-TMPFILE="/tmp/lsi_temp.txt"
 
 if [[ ! -x "$STORCLI" ]]; then
-  echo "N/A" > "$TMPFILE"
+  echo "N/A" > "/tmp/lsi_temp_c0.txt"
   exit 1
 fi
 
-OUTPUT=$("$STORCLI" /c0 show all 2>/dev/null)
-if [[ $? -ne 0 || -z "$OUTPUT" ]]; then
-  echo "N/A" > "$TMPFILE"
+CTRL_COUNT=$("$STORCLI" show 2>/dev/null | grep -oP 'Number of Controllers\s*=\s*\K[0-9]+')
+
+if [[ -z "$CTRL_COUNT" || "$CTRL_COUNT" -eq 0 ]]; then
+  echo "N/A" > "/tmp/lsi_temp_c0.txt"
   exit 1
 fi
 
-TEMP=$(echo "$OUTPUT" \
-  | grep -i "ROC temperature" \
-  | grep -oP '=\s*\K[0-9]+')
-
-if [[ -z "$TEMP" ]]; then
-  echo "N/A" > "$TMPFILE"
-  exit 1
-fi
-
-echo "$TEMP" > "$TMPFILE"
+for i in $(seq 0 $((CTRL_COUNT - 1))); do
+  OUTPUT=$("$STORCLI" /c${i} show all 2>/dev/null)
+  TEMP=$(echo "$OUTPUT" \
+    | grep -i "ROC temperature" \
+    | grep -oP '=\s*\K[0-9]+')
+  if [[ -z "$TEMP" ]]; then
+    echo "N/A" > "/tmp/lsi_temp_c${i}.txt"
+  else
+    echo "$TEMP" > "/tmp/lsi_temp_c${i}.txt"
+  fi
+done
 </INLINE>
 </FILE>
 
@@ -55,18 +56,38 @@ Icon="thermometer-half"
 $docroot = $docroot ?? $_SERVER['DOCUMENT_ROOT'] ?: '/usr/local/emhttp';
 require_once "$docroot/webGui/include/Helpers.php";
 
-$raw  = trim(@file_get_contents('/tmp/lsi_temp.txt'));
-$temp = is_numeric($raw) ? (int)$raw : null;
+$tmpfiles = glob('/tmp/lsi_temp_c*.txt');
+if (empty($tmpfiles)) $tmpfiles = ['/tmp/lsi_temp_c0.txt'];
+sort($tmpfiles);
+
+$count = count($tmpfiles);
+$subtitle = $count === 1 ? '1 controller detected' : $count.' controllers detected';
+
+$rows = '';
+foreach ($tmpfiles as $file) {
+  preg_match('/lsi_temp_c(\d+)\.txt$/', $file, $m);
+  $ctrl = $m[1] ?? '0';
+  $raw  = trim(@file_get_contents($file));
+  $temp = is_numeric($raw) ? (int)$raw : null;
+  $rows .= '
+  &lt;tr class="updated"&gt;
+    &lt;td&gt;
+      &lt;span class="w36"&gt;&lt;i class="fa fa-fw fa-thermometer-half"&gt;&lt;/i&gt; Controller '.$ctrl.' ROC Temp&lt;/span&gt;
+      &lt;span&gt;'.($temp !== null ? my_temp($temp) : '&lt;em&gt;N/A&lt;/em&gt;').'&lt;/span&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;';
+}
 
 $mytiles['lsi_monitor']['column1'] = '
-&lt;tbody id="lsi-monitor" title="LSI 9300-8i HBA"&gt;
+&lt;tbody id="lsi-monitor" title="LSI HBA Monitor"&gt;
   &lt;tr&gt;
     &lt;td&gt;
       &lt;span class="tile-header"&gt;
         &lt;span class="tile-header-left"&gt;
           &lt;i class="fa fa-thermometer-half icon-hardware f32"&gt;&lt;/i&gt;
-          &lt;div class="section"&gt;LSI 9300-8i HBA&lt;br&gt;
-            &lt;span&gt;&lt;i class="fa fa-thermometer-half"&gt;&lt;/i&gt; ROC Temperature: '.($temp !== null ? my_temp($temp) : '&lt;em&gt;N/A&lt;/em&gt;').'&lt;/span&gt;
+          &lt;div&gt;
+            &lt;h3 class="tile-header-main"&gt;LSI HBA Monitor&lt;/h3&gt;
+            &lt;span class="tile-header-subtitle"&gt;'.$subtitle.'&lt;/span&gt;
           &lt;/div&gt;
         &lt;/span&gt;
         &lt;span class="tile-header-right"&gt;
@@ -75,6 +96,7 @@ $mytiles['lsi_monitor']['column1'] = '
       &lt;/span&gt;
     &lt;/td&gt;
   &lt;/tr&gt;
+  '.$rows.'
 &lt;/tbody&gt;';
 ?&gt;
 </INLINE>
@@ -87,9 +109,9 @@ echo "Installing LSI Monitor..."
 mkdir -p &plugdir;/scripts
 mkdir -p &plugdir;/bin
 
-cp &bootdir;/get_temp.sh  &plugdir;/scripts/get_temp.sh
-cp &bootdir;/storcli64    &plugdir;/bin/storcli64
-cp &bootdir;/lsi_monitor.page &plugdir;/lsi_monitor.page
+cp &bootdir;/get_temp.sh       &plugdir;/scripts/get_temp.sh
+cp &bootdir;/storcli64         &plugdir;/bin/storcli64
+cp &bootdir;/lsi_monitor.page  &plugdir;/lsi_monitor.page
 
 chmod +x &plugdir;/scripts/get_temp.sh
 chmod +x &plugdir;/bin/storcli64
@@ -113,7 +135,7 @@ rm -rf &plugdir;
 rm -rf &bootdir;
 rm -f /usr/local/sbin/storcli
 rm -f /etc/cron.d/lsi_monitor
-rm -f /tmp/lsi_temp.txt
+rm -f /tmp/lsi_temp_c*.txt
 kill -HUP $(cat /var/run/crond.pid 2>/dev/null) 2>/dev/null || true
 echo "Removal complete."
 </INLINE>
