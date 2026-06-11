@@ -2,10 +2,10 @@ Menu="Dashboard"
 Icon="thermometer-half"
 ---
 <table id="db-lsi_monitor" class="dash_custom">
-    <thead sort="999" title="LSI Monitor">
+    <thead sort="999">
         <tr class="hd">
             <td colspan="2">
-                <i class="fa fa-thermometer-half icon-hardware"></i>
+                <i class="fa fa-thermometer-half"></i>
                 <span class="cap">LSI 9300-8i HBA</span>
             </td>
         </tr>
