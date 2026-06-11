@@ -10,7 +10,7 @@ if (!$lsi_temp) $lsi_temp = "Loading...";
     <tbody title="LSI Monitor">
         <tr>
             <td class="next" colspan="2">
-                <i class="fa fa-thermometer-half icon-hardware mt1"></i> LSI 9300-8i HBA
+                <i class="fa fa-thermometer-half icon-hardware mt1"></i> <span style="text-transform: uppercase;">LSI 9300-8i HBA</span>
                 <i class="fa fa-chevron-down chevron mt1" id="dash_lsi_monitor" onclick="toggleChevron('dash_lsi_monitor',0)"></i>
             </td>
         </tr>
