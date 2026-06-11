@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "lsi_monitor">
 <!ENTITY author    "fatredwombat">
-<!ENTITY version   "2026.06.11i">
+<!ENTITY version   "2026.06.11">
 <!ENTITY github    "https://raw.githubusercontent.com/fatredwombat1-beep/lsi_monitor/refs/heads/main">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY bootdir   "/boot/config/plugins/&name;">
@@ -11,40 +11,99 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" pluginURL="&github;/&name;.plg" min="6.9.0" icon="thermometer-half">
 
 <FILE Name="&bootdir;/get_temp.sh">
-<URL>&github;/scripts/get_temp.sh</URL>
+<INLINE>
+#!/bin/bash
+
+STORCLI="/usr/local/emhttp/plugins/lsi_monitor/bin/storcli64"
+TMPFILE="/tmp/lsi_temp.txt"
+
+if [[ ! -x "$STORCLI" ]]; then
+  echo "N/A" > "$TMPFILE"
+  exit 1
+fi
+
+OUTPUT=$("$STORCLI" /c0 show all 2>/dev/null)
+if [[ $? -ne 0 || -z "$OUTPUT" ]]; then
+  echo "N/A" > "$TMPFILE"
+  exit 1
+fi
+
+TEMP=$(echo "$OUTPUT" \
+  | grep -i "ROC temperature" \
+  | grep -oP '=\s*\K[0-9]+')
+
+if [[ -z "$TEMP" ]]; then
+  echo "N/A" > "$TMPFILE"
+  exit 1
+fi
+
+echo "$TEMP" > "$TMPFILE"
+</INLINE>
+</FILE>
+
+<FILE Name="&bootdir;/lsi_monitor.page">
+<INLINE>
+Menu="Dashboard"
+Title="LSI Monitor"
+Icon="thermometer-half"
+---
+&lt;?php
+$docroot = $docroot ?? $_SERVER['DOCUMENT_ROOT'] ?: '/usr/local/emhttp';
+require_once "$docroot/webGui/include/Helpers.php";
+
+$raw  = trim(@file_get_contents('/tmp/lsi_temp.txt'));
+$temp = is_numeric($raw) ? (int)$raw : null;
+?&gt;
+&lt;tbody id="lsi-monitor" title="LSI 9300-8i HBA"&gt;
+  &lt;tr class="even"&gt;
+    &lt;td colspan="2"&gt;
+      &lt;div class="tile-header"&gt;
+        &lt;div class="tile-header-left"&gt;
+          &lt;i class="fa fa-thermometer-half icon"&gt;&lt;/i&gt;
+          &lt;div&gt;
+            &lt;span class="tile-header-title"&gt;&lt;b&gt;LSI 9300-8i HBA&lt;/b&gt;&lt;/span&gt;
+            &lt;span class="tile-header-subtitle"&gt;&lt;i class="fa fa-thermometer-half"&gt;&lt;/i&gt; ROC Temperature: &lt;?= $temp !== null ? my_temp($temp) : '&lt;em&gt;N/A&lt;/em&gt;' ?&gt;&lt;/span&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class="tile-header-right"&gt;
+          &lt;div class="tile-header-right-controls"&gt;&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+</INLINE>
 </FILE>
 
 <FILE Name="&bootdir;/storcli64">
 <URL>&github;/bin/storcli64</URL>
 </FILE>
 
-<FILE Name="&bootdir;/lsi_monitor.page">
-<URL>&github;/lsi_monitor.page</URL>
-</FILE>
-
 <FILE Run="/bin/bash">
 <INLINE>
-echo "Installing LSI Monitor Dashboard..."
+echo "Installing LSI Monitor..."
 
 mkdir -p &plugdir;/scripts
 mkdir -p &plugdir;/bin
 
-cp &bootdir;/get_temp.sh &plugdir;/scripts/
-cp &bootdir;/storcli64 &plugdir;/bin/
-cp &bootdir;/lsi_monitor.page &plugdir;/
+cp &bootdir;/get_temp.sh &plugdir;/scripts/get_temp.sh
+cp &bootdir;/storcli64   &plugdir;/bin/storcli64
+cp &bootdir;/lsi_monitor.page &plugdir;/lsi_monitor.page
 
 chmod +x &plugdir;/scripts/get_temp.sh
 chmod +x &plugdir;/bin/storcli64
 
 ln -sf &plugdir;/bin/storcli64 /usr/local/sbin/storcli
 
-# Setup the Cron Job with properly escaped XML
-echo "*/5 * * * * &plugdir;/scripts/get_temp.sh >/dev/null 2>&amp;1" > /etc/cron.d/lsi_monitor
+# Write cron job and reload crond
+echo "*/5 * * * * root &plugdir;/scripts/get_temp.sh >/dev/null 2>&amp;1" > /etc/cron.d/lsi_monitor
 chmod 644 /etc/cron.d/lsi_monitor
+kill -HUP $(cat /var/run/crond.pid 2>/dev/null) 2>/dev/null || true
 
+# Run immediately so dashboard is not blank on first load
 &plugdir;/scripts/get_temp.sh
 
-echo "Installation Complete."
+echo "Installation complete."
 </INLINE>
 </FILE>
 
@@ -56,7 +115,8 @@ rm -rf &bootdir;
 rm -f /usr/local/sbin/storcli
 rm -f /etc/cron.d/lsi_monitor
 rm -f /tmp/lsi_temp.txt
-echo "Removal Complete."
+kill -HUP $(cat /var/run/crond.pid 2>/dev/null) 2>/dev/null || true
+echo "Removal complete."
 </INLINE>
 </FILE>
 
